@@ -288,51 +288,6 @@ reversi-ai-battle/
 
 ---
 
-## GitHubに公開する場合
-
-GitHubに公開する前に、ビルド済みファイルやエディタ設定などを含めないようにします。
-
-`.gitignore` の例は以下です。
-
-```gitignore
-target/
-*.class
-*.jar
-*.war
-
-.idea/
-.vscode/
-*.iml
-
-.DS_Store
-Thumbs.db
-
-.env
-
-Identifier
-Zone.Identifier
-*Zone.Identifier
-```
-
-GitHubに公開する基本手順は以下です。
-
-```bash
-git init
-git add .
-git commit -m "Initial commit"
-git branch -M main
-git remote add origin https://github.com/ユーザー名/reversi-ai-battle.git
-git push -u origin main
-```
-
-SSHを使用する場合は、remote URLを以下の形式にします。
-
-```bash
-git remote add origin git@github.com:ユーザー名/reversi-ai-battle.git
-```
-
----
-
 ## 生成AIの利用内容
 
 本アプリの開発では、生成AIを以下の用途で利用しました。
