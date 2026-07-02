@@ -14,13 +14,20 @@ public enum Difficulty {
         this.label = label;
     }
 
-    public int getDepth() { return depth; }
-    public String getLabel() { return label; }
+    public int getDepth() {
+        return depth;
+    }
+
+    public String getLabel() {
+        return label;
+    }
 
     public static Difficulty from(String value) {
-        if (value == null) return NORMAL;
+        if (value == null)
+            return NORMAL;
         for (Difficulty d : values()) {
-            if (d.name().equalsIgnoreCase(value) || d.label.equalsIgnoreCase(value)) return d;
+            if (d.name().equalsIgnoreCase(value) || d.label.equalsIgnoreCase(value))
+                return d;
         }
         return NORMAL;
     }

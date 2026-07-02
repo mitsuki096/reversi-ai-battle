@@ -801,3 +801,12 @@ select {
     aspect-ratio: 1 / 1;
     flex: none;
 }
+
+.new-game-form {
+    margin: 0 0 12px;
+}
+
+.new-game-button {
+    width: 100%;
+    justify-content: center;
+}

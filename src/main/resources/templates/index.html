@@ -16,9 +16,6 @@
         <div>
             <h1>Reversi AI Battle</h1>
         </div>
-        <form th:action="@{/reset}" method="post">
-            <button class="ghost-button" type="submit">New Game</button>
-        </form>
     </section>
 
     <section class="game-layout">
@@ -30,6 +27,10 @@
                     <p>難易度と状態</p>
                 </div>
             </div>
+
+            <form th:action="@{/reset}" method="post" class="new-game-form">
+                <button class="ghost-button new-game-button" type="submit">New Game</button>
+            </form>
 
             <form th:action="@{/difficulty}" method="post" class="difficulty-form">
                 <label for="difficulty">AI Difficulty</label>
@@ -44,7 +45,7 @@
                 <input id="recommendEnabledInput" type="hidden" name="enabled" th:value="${!showRecommendation}">
                 <button type="submit" id="recommendToggle" class="recommend-toggle" th:classappend="${showRecommendation} ? ' on' : ' off'">
                     <span class="toggle-lamp"></span>
-                    <span id="recommendToggleText" th:text="${showRecommendation} ? 'おすすめ表示 ON' : 'おすすめ表示 OFF'">おすすめ表示 ON</span>
+                    <span id="recommendToggleText" th:text="${showRecommendation} ? 'おすすめ表示 ON' : 'おすすめ表示 OFF'">おすすめ表示 OFF</span>
                 </button>
             </form>
 
@@ -52,13 +53,6 @@
                 <span class="pulse"></span>
                 <p id="message" th:text="${board.message}">あなたの番です</p>
             </div>
-
-            <form th:if="${playerMustPass}" th:action="@{/pass}" method="post" class="pass-form" id="passForm">
-                <button class="pass-button" type="submit">パスしてCPUへ進める</button>
-            </form>
-            <form th:unless="${playerMustPass}" th:action="@{/pass}" method="post" class="pass-form hidden" id="passFormHidden">
-                <button class="pass-button" type="submit">パスしてCPUへ進める</button>
-            </form>
 
             <div class="recommend-box" id="recommendBox" th:classappend="${showRecommendation and recommendedMove != ''} ? '' : ' hidden'">
                 <span>RECOMMEND</span>
@@ -72,12 +66,12 @@
 
             <div class="player-strip">
                 <div class="player-card active-player">
-                    <span class="mini-disc black-disc"></span>
-                    <div><small>You</small><strong>Black</strong></div>
+                    <span class="mini-disc" th:classappend="${board.userColor == 1} ? ' black-disc' : ' white-disc'"></span>
+                    <div><small>You</small><strong id="userColorText" th:text="${board.userColorLabel}">Black</strong></div>
                 </div>
                 <div class="player-card">
-                    <span class="mini-disc white-disc"></span>
-                    <div><small>CPU</small><strong>White</strong></div>
+                    <span class="mini-disc" th:classappend="${board.cpuColor == 1} ? ' black-disc' : ' white-disc'"></span>
+                    <div><small>CPU</small><strong id="cpuColorText" th:text="${board.cpuColorLabel}">White</strong></div>
                 </div>
             </div>
 
@@ -91,7 +85,7 @@
             <div class="board-head">
                 <div><span class="section-label">Board</span><h2>8 × 8 Arena</h2></div>
                 <div class="turn-chip" id="turnChip" th:classappend="${board.gameOver} ? ' finished' : ''">
-                    <span id="turnText" th:text="${board.gameOver} ? 'Finished' : (${playerMustPass} ? 'Pass' : 'Your Turn')">Your Turn</span>
+                    <span id="turnText" th:text="${board.gameOver} ? 'Finished' : (${board.currentTurn == board.userColor} ? 'Your Turn' : 'CPU Thinking')">Your Turn</span>
                 </div>
             </div>
 
@@ -101,7 +95,7 @@
                         <input type="hidden" name="row" th:value="${r}">
                         <input type="hidden" name="col" th:value="${c}">
                         <button type="submit" class="cell" th:data-row="${r}" th:data-col="${c}"
-                                th:disabled="${board.gameOver or playerMustPass}"
+                                th:disabled="${board.gameOver or board.currentTurn != board.userColor}"
                                 th:aria-label="|${r + 1}行 ${c + 1}列|"
                                 th:classappend="${board.cells[r][c] == 1 ? ' has-black' : (board.cells[r][c] == 2 ? ' has-white' : '')}
                                               + (${legalMoves.contains(r + '-' + c)} ? ' legal' : '')
@@ -133,8 +127,8 @@
                 <div id="recommendLegend" th:classappend="${showRecommendation} ? '' : ' hidden'"><span class="legend-dot recommend-dot"></span>おすすめ</div>
                 <div><span class="legend-dot legal-dot"></span>置ける場所</div>
                 <div><span class="legend-dot last-dot"></span>直前の手</div>
-                <div><span class="legend-dot black-dot"></span>あなた</div>
-                <div><span class="legend-dot white-dot"></span>CPU</div>
+                <div><span class="legend-dot black-dot"></span>黒</div>
+                <div><span class="legend-dot white-dot"></span>白</div>
             </div>
         </aside>
     </section>
@@ -161,11 +155,6 @@
 
     document.addEventListener("submit", async (event) => {
         const form = event.target;
-        if (form.matches("#passForm, #passFormHidden")) {
-            event.preventDefault();
-            if (state.busy) return;
-            await postAndRender("/api/pass", new URLSearchParams(), false);
-        }
         if (form.matches("#recommendForm")) {
             event.preventDefault();
             if (state.busy) return;
@@ -180,7 +169,6 @@
             const playerData = await postJson("/api/player-move", new URLSearchParams({ row, col }));
             state.latestData = playerData;
             render(playerData);
-
             if (playerData.cpuPending) {
                 showThinking(true);
                 await nextPaint();
@@ -243,7 +231,7 @@
         const legalMoves = new Set(data.legalMoves || []);
         const recommendedMove = data.recommendedMove || "";
         const showRecommendation = Boolean(data.showRecommendation);
-        const recommendationActive = showRecommendation && Boolean(data.recommendationVisible) && !data.cpuPending && !data.playerMustPass && !data.gameOver;
+        const recommendationActive = showRecommendation && Boolean(data.recommendationVisible) && !data.cpuPending && !data.gameOver;
 
         qs("#message").textContent = data.message || "";
         qs("#blackCount").textContent = data.blackCount;
@@ -251,15 +239,12 @@
         qs("#cpuEvaluation").textContent = data.cpuEvaluation;
         qs("#searchDepth").textContent = data.searchDepth;
         qs("#cpuThinkingTime").textContent = (Number(data.cpuThinkingTimeMillis || 0) / 1000).toFixed(2);
-
+        qs("#userColorText").textContent = data.userColorLabel || "";
+        qs("#cpuColorText").textContent = data.cpuColorLabel || "";
         qs("#winnerCard")?.classList.toggle("hidden", !data.gameOver);
         qs("#winnerText").textContent = data.winner || "";
         qs("#turnChip")?.classList.toggle("finished", Boolean(data.gameOver));
-        qs("#turnText").textContent = data.gameOver ? "Finished" : (data.playerMustPass ? "Pass" : (data.cpuPending ? "CPU Thinking" : "Your Turn"));
-
-        const passForm = qs("#passForm") || qs("#passFormHidden");
-        if (passForm) passForm.classList.toggle("hidden", !data.playerMustPass);
-
+        qs("#turnText").textContent = data.gameOver ? "Finished" : (data.currentTurn === data.userColor ? "Your Turn" : "CPU Thinking");
         qs("#recommendBox")?.classList.toggle("hidden", !(recommendationActive && recommendedMove));
         qs("#recommendLegend")?.classList.toggle("hidden", !showRecommendation);
 
@@ -291,7 +276,7 @@
 
     function applyCellDisabledState(data) {
         qsa(".cell").forEach((cell) => {
-            cell.disabled = Boolean(data.gameOver || data.playerMustPass || data.cpuPending);
+            cell.disabled = Boolean(data.gameOver || data.currentTurn !== data.userColor || data.cpuPending);
         });
     }
 

@@ -25,13 +25,14 @@ public class ReversiController {
     @GetMapping("/")
     public String showGame(HttpSession session, Model model) {
         Board board = getOrCreateBoard(session);
+        gameService.autoPassIfNeeded(board);
         boolean showRecommendation = getShowRecommendation(session);
         boolean recommendationVisible = recommendationVisible(board, showRecommendation, false);
 
         model.addAttribute("board", board);
         model.addAttribute("difficulties", Difficulty.values());
         model.addAttribute("legalMoves", gameService.legalMoveKeys(board));
-        model.addAttribute("playerMustPass", gameService.playerMustPass(board));
+        model.addAttribute("playerMustPass", false);
         model.addAttribute("showRecommendation", showRecommendation);
         model.addAttribute("recommendedMove", recommendationVisible ? gameService.recommendedMoveKey(board) : "");
         return "index";
@@ -41,14 +42,6 @@ public class ReversiController {
     public String move(@RequestParam int row, @RequestParam int col, HttpSession session) {
         Board board = getOrCreateBoard(session);
         gameService.playerMove(board, row, col);
-        session.setAttribute(SESSION_BOARD, board);
-        return "redirect:/";
-    }
-
-    @PostMapping("/pass")
-    public String pass(HttpSession session) {
-        Board board = getOrCreateBoard(session);
-        gameService.passPlayer(board);
         session.setAttribute(SESSION_BOARD, board);
         return "redirect:/";
     }
@@ -92,27 +85,10 @@ public class ReversiController {
         return boardResponse(board, getShowRecommendation(session), false);
     }
 
-    @PostMapping("/api/move")
-    @ResponseBody
-    public Map<String, Object> apiMove(@RequestParam int row, @RequestParam int col, HttpSession session) {
-        Board board = getOrCreateBoard(session);
-        gameService.playerMove(board, row, col);
-        session.setAttribute(SESSION_BOARD, board);
-        return boardResponse(board, getShowRecommendation(session), false);
-    }
-
-    @PostMapping("/api/pass")
-    @ResponseBody
-    public Map<String, Object> apiPass(HttpSession session) {
-        Board board = getOrCreateBoard(session);
-        gameService.passPlayer(board);
-        session.setAttribute(SESSION_BOARD, board);
-        return boardResponse(board, getShowRecommendation(session), false);
-    }
-
     @PostMapping("/api/recommendation")
     @ResponseBody
-    public Map<String, Object> apiRecommendation(@RequestParam(defaultValue = "false") boolean enabled, HttpSession session) {
+    public Map<String, Object> apiRecommendation(@RequestParam(defaultValue = "false") boolean enabled,
+            HttpSession session) {
         session.setAttribute(SESSION_SHOW_RECOMMENDATION, enabled);
         Board board = getOrCreateBoard(session);
         return boardResponse(board, enabled, false);
@@ -141,12 +117,12 @@ public class ReversiController {
                 && !cpuPending
                 && board != null
                 && !board.isGameOver()
+                && board.getCurrentTurn() == board.getUserColor()
                 && !gameService.playerMustPass(board);
     }
 
     private Map<String, Object> boardResponse(Board board, boolean showRecommendation, boolean cpuPending) {
         boolean recommendationVisible = recommendationVisible(board, showRecommendation, cpuPending);
-
         Map<String, Object> res = new HashMap<>();
         res.put("cells", board.getCells());
         res.put("message", board.getMessage());
@@ -159,8 +135,13 @@ public class ReversiController {
         res.put("cpuThinkingTimeMillis", board.getCpuThinkingTimeMillis());
         res.put("cpuEvaluation", board.getCpuEvaluation());
         res.put("searchDepth", board.getSearchDepth());
+        res.put("userColor", board.getUserColor());
+        res.put("cpuColor", board.getCpuColor());
+        res.put("userColorLabel", board.getUserColorLabel());
+        res.put("cpuColorLabel", board.getCpuColorLabel());
+        res.put("currentTurn", board.getCurrentTurn());
         res.put("legalMoves", gameService.legalMoveKeys(board));
-        res.put("playerMustPass", gameService.playerMustPass(board));
+        res.put("playerMustPass", false);
         res.put("showRecommendation", showRecommendation);
         res.put("recommendedMove", recommendationVisible ? gameService.recommendedMoveKey(board) : "");
         res.put("recommendationVisible", recommendationVisible);
