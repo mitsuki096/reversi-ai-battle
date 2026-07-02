@@ -764,3 +764,40 @@ select {
         font-size: 1.8rem;
     }
 }
+
+.board-row {
+    grid-template-columns: repeat(8, minmax(0, 1fr));
+    min-height: 0;
+}
+
+.cell-form {
+    display: grid;
+    min-width: 0;
+    min-height: 0;
+}
+
+.cell {
+    padding: 0;
+    min-width: 0;
+    min-height: 0;
+}
+
+.disc {
+    width: 72%;
+    height: auto;
+    aspect-ratio: 1 / 1;
+    border-radius: 50%;
+}
+
+.hint {
+    width: 26%;
+    height: auto;
+    aspect-ratio: 1 / 1;
+    border-radius: 50%;
+}
+
+.mini-disc,
+.legend-dot {
+    aspect-ratio: 1 / 1;
+    flex: none;
+}

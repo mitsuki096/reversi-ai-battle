@@ -1,6 +1,5 @@
 package com.example.reversi.service;
 
-//import com.example.reversi.model.Board;
 import com.example.reversi.model.Move;
 import org.springframework.stereotype.Service;
 
