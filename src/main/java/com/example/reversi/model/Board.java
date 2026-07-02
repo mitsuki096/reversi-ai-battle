@@ -22,6 +22,7 @@ public class Board implements Serializable {
     private int userColor = BLACK;
     private int cpuColor = WHITE;
     private int currentTurn = BLACK;
+    private boolean localTwoPlayers;
 
     public int[][] getCells() {
         return cells;
@@ -143,6 +144,14 @@ public class Board implements Serializable {
         this.currentTurn = currentTurn;
     }
 
+    public boolean isLocalTwoPlayers() {
+        return localTwoPlayers;
+    }
+
+    public void setLocalTwoPlayers(boolean localTwoPlayers) {
+        this.localTwoPlayers = localTwoPlayers;
+    }
+
     public String getUserColorLabel() {
         return userColor == BLACK ? "Black" : "White";
     }
@@ -151,11 +160,11 @@ public class Board implements Serializable {
         return cpuColor == BLACK ? "Black" : "White";
     }
 
-    public String getUserColorLabelJa() {
-        return userColor == BLACK ? "黒" : "白";
+    public String getCurrentTurnLabel() {
+        return currentTurn == BLACK ? "Black" : (currentTurn == WHITE ? "White" : "-");
     }
 
-    public String getCpuColorLabelJa() {
-        return cpuColor == BLACK ? "黒" : "白";
+    public String getCurrentTurnLabelJa() {
+        return currentTurn == BLACK ? "黒" : (currentTurn == WHITE ? "白" : "-");
     }
 }

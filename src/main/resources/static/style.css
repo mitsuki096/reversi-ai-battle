@@ -810,3 +810,21 @@ select {
     width: 100%;
     justify-content: center;
 }
+
+.mode-form,
+.new-game-form {
+    display: grid;
+    gap: 8px;
+    margin: 0 0 12px;
+}
+
+.mode-form label {
+    color: var(--muted);
+    font-size: .86rem;
+    font-weight: 700;
+}
+
+.new-game-button {
+    width: 100%;
+    justify-content: center;
+}

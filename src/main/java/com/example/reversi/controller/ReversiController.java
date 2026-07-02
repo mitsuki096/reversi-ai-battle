@@ -32,7 +32,6 @@ public class ReversiController {
         model.addAttribute("board", board);
         model.addAttribute("difficulties", Difficulty.values());
         model.addAttribute("legalMoves", gameService.legalMoveKeys(board));
-        model.addAttribute("playerMustPass", false);
         model.addAttribute("showRecommendation", showRecommendation);
         model.addAttribute("recommendedMove", recommendationVisible ? gameService.recommendedMoveKey(board) : "");
         return "index";
@@ -46,24 +45,36 @@ public class ReversiController {
         return "redirect:/";
     }
 
-    @PostMapping("/recommendation")
-    public String recommendation(@RequestParam(defaultValue = "false") boolean enabled, HttpSession session) {
-        session.setAttribute(SESSION_SHOW_RECOMMENDATION, enabled);
-        return "redirect:/";
-    }
-
     @PostMapping("/reset")
     public String reset(HttpSession session) {
         Board old = (Board) session.getAttribute(SESSION_BOARD);
         Difficulty difficulty = old == null ? Difficulty.NORMAL : old.getDifficulty();
-        session.setAttribute(SESSION_BOARD, gameService.newGame(difficulty));
+        boolean localTwoPlayers = old != null && old.isLocalTwoPlayers();
+        session.setAttribute(SESSION_BOARD, gameService.newGame(difficulty, localTwoPlayers));
         return "redirect:/";
     }
 
     @PostMapping("/difficulty")
     public String difficulty(@RequestParam String difficulty, HttpSession session) {
         Difficulty d = Difficulty.from(difficulty);
-        session.setAttribute(SESSION_BOARD, gameService.newGame(d));
+        Board old = (Board) session.getAttribute(SESSION_BOARD);
+        boolean localTwoPlayers = old != null && old.isLocalTwoPlayers();
+        session.setAttribute(SESSION_BOARD, gameService.newGame(d, localTwoPlayers));
+        return "redirect:/";
+    }
+
+    @PostMapping("/mode")
+    public String mode(@RequestParam String mode, HttpSession session) {
+        Board old = (Board) session.getAttribute(SESSION_BOARD);
+        Difficulty difficulty = old == null ? Difficulty.NORMAL : old.getDifficulty();
+        boolean localTwoPlayers = "LOCAL".equalsIgnoreCase(mode);
+        session.setAttribute(SESSION_BOARD, gameService.newGame(difficulty, localTwoPlayers));
+        return "redirect:/";
+    }
+
+    @PostMapping("/recommendation")
+    public String recommendation(@RequestParam(defaultValue = "false") boolean enabled, HttpSession session) {
+        session.setAttribute(SESSION_SHOW_RECOMMENDATION, enabled);
         return "redirect:/";
     }
 
@@ -97,7 +108,7 @@ public class ReversiController {
     private Board getOrCreateBoard(HttpSession session) {
         Board board = (Board) session.getAttribute(SESSION_BOARD);
         if (board == null) {
-            board = gameService.newGame(Difficulty.NORMAL);
+            board = gameService.newGame(Difficulty.NORMAL, false);
             session.setAttribute(SESSION_BOARD, board);
         }
         return board;
@@ -117,8 +128,8 @@ public class ReversiController {
                 && !cpuPending
                 && board != null
                 && !board.isGameOver()
-                && board.getCurrentTurn() == board.getUserColor()
-                && !gameService.playerMustPass(board);
+                && !board.isLocalTwoPlayers()
+                && board.getCurrentTurn() == board.getUserColor();
     }
 
     private Map<String, Object> boardResponse(Board board, boolean showRecommendation, boolean cpuPending) {
@@ -140,8 +151,10 @@ public class ReversiController {
         res.put("userColorLabel", board.getUserColorLabel());
         res.put("cpuColorLabel", board.getCpuColorLabel());
         res.put("currentTurn", board.getCurrentTurn());
+        res.put("currentTurnLabel", board.getCurrentTurnLabel());
+        res.put("currentTurnLabelJa", board.getCurrentTurnLabelJa());
+        res.put("localTwoPlayers", board.isLocalTwoPlayers());
         res.put("legalMoves", gameService.legalMoveKeys(board));
-        res.put("playerMustPass", false);
         res.put("showRecommendation", showRecommendation);
         res.put("recommendedMove", recommendationVisible ? gameService.recommendedMoveKey(board) : "");
         res.put("recommendationVisible", recommendationVisible);
