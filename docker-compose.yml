@@ -1,0 +1,5 @@
+services:
+  reversi-ai-battle:
+    build: .
+    ports:
+      - "8080:8080"

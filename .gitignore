@@ -1,0 +1,17 @@
+target/
+*.class
+*.jar
+*.war
+
+.idea/
+.vscode/
+*.iml
+
+.DS_Store
+Thumbs.db
+
+.env
+
+Identifier
+Zone.Identifier
+*Zone.Identifier
