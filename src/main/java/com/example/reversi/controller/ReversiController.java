@@ -105,6 +105,19 @@ public class ReversiController {
         return boardResponse(board, enabled, false);
     }
 
+    @PostMapping("/api/reset")
+    @ResponseBody
+    public Map<String, Object> apiReset(HttpSession session) {
+        Board old = (Board) session.getAttribute(SESSION_BOARD);
+        Difficulty difficulty = old == null ? Difficulty.NORMAL : old.getDifficulty();
+        boolean localTwoPlayers = old != null && old.isLocalTwoPlayers();
+
+        Board board = gameService.newGame(difficulty, localTwoPlayers);
+        session.setAttribute(SESSION_BOARD, board);
+
+        return boardResponse(board, getShowRecommendation(session), false);
+    }
+
     private Board getOrCreateBoard(HttpSession session) {
         Board board = (Board) session.getAttribute(SESSION_BOARD);
         if (board == null) {
