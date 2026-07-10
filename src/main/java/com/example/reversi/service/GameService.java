@@ -117,6 +117,15 @@ public class GameService {
         return true;
     }
 
+    public boolean canPlayerMove(Board board, int row, int col) {
+        if (board == null || board.isGameOver())
+            return false;
+        int player = board.isLocalTwoPlayers() ? board.getCurrentTurn() : board.getUserColor();
+        if (!board.isLocalTwoPlayers() && board.getCurrentTurn() != player)
+            return false;
+        return boardService.isLegalMove(board.getCells(), row, col, player);
+    }
+
     private void localMove(Board board, int row, int col) {
         int player = board.getCurrentTurn();
         if (!boardService.isLegalMove(board.getCells(), row, col, player)) {

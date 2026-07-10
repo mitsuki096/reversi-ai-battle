@@ -75,7 +75,9 @@ public class AiService {
         transpositionTable.clear();
         deadlineNanos = start + 3_000_000_000L;
         int empty = boardService.countEmpty(cells);
-        int maxDepth = empty <= 12 ? empty + 2 : 10;
+        // 通常局面は難易度定義どおり深さ6まで反復深化する。残り12マス以下では
+        // パスも考慮した終局探索を優先し、残りマス数に応じて探索を延長する。
+        int maxDepth = empty <= 12 ? empty + 2 : Difficulty.ULTIMATE.getDepth();
         Move best = null;
         int bestScore = -INF;
         int completedDepth = 0;

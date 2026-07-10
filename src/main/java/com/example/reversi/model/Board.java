@@ -167,4 +167,29 @@ public class Board implements Serializable {
     public String getCurrentTurnLabelJa() {
         return currentTurn == BLACK ? "黒" : (currentTurn == WHITE ? "白" : "-");
     }
+
+    public Board copy() {
+        Board copy = new Board();
+        int[][] copiedCells = new int[8][8];
+        for (int row = 0; row < 8; row++) {
+            System.arraycopy(cells[row], 0, copiedCells[row], 0, 8);
+        }
+        copy.setCells(copiedCells);
+        copy.setGameOver(gameOver);
+        copy.setMessage(message);
+        copy.setWinner(winner);
+        copy.setLastMoveRow(lastMoveRow);
+        copy.setLastMoveCol(lastMoveCol);
+        copy.setBlackCount(blackCount);
+        copy.setWhiteCount(whiteCount);
+        copy.setDifficulty(difficulty);
+        copy.setCpuThinkingTimeMillis(cpuThinkingTimeMillis);
+        copy.setCpuEvaluation(cpuEvaluation);
+        copy.setSearchDepth(searchDepth);
+        copy.setUserColor(userColor);
+        copy.setCpuColor(cpuColor);
+        copy.setCurrentTurn(currentTurn);
+        copy.setLocalTwoPlayers(localTwoPlayers);
+        return copy;
+    }
 }

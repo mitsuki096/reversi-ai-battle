@@ -9,29 +9,19 @@
 </head>
 
 <body>
-    <div class="bg-orb orb-1"></div>
-    <div class="bg-orb orb-2"></div>
-    <div class="bg-grid"></div>
-
     <main class="app-shell">
-        <section class="topbar">
-            <div>
-                <h1>Reversi AI Battle</h1>
-            </div>
-        </section>
+        <header class="app-header">
+            <h1>Reversi AI Battle</h1>
+        </header>
 
         <section class="game-layout">
             <aside class="side-card control-card">
                 <div class="card-header">
-                    <span class="card-icon">⚙</span>
-                    <div>
-                        <h2>Control</h2>
-                        <p>モードと状態</p>
-                    </div>
+                    <h2>Control</h2>
                 </div>
 
                 <form th:action="@{/reset}" method="post" class="new-game-form" id="newGameForm">
-                    <button class="ghost-button new-game-button" type="submit">New Game</button>
+                    <button class="primary-button new-game-button" type="submit">New Game</button>
                 </form>
 
                 <form th:action="@{/mode}" method="post" class="mode-form">
@@ -66,56 +56,65 @@
                     </button>
                 </form>
 
-                <div class="status-box">
-                    <span class="pulse"></span>
-                    <p id="message" th:text="${board.message}">黒の番です</p>
-                </div>
-
-                <div class="recommend-box" id="recommendBox"
-                    th:classappend="${showRecommendation and recommendedMove != ''} ? '' : ' hidden'">
-                    <span>RECOMMEND</span>
-                    <strong>★ のマスがおすすめ</strong>
-                </div>
-
-                <div class="thinking-box hidden" id="thinkingBox">
-                    <span class="thinking-spinner"></span>
-                    <strong>CPU thinking...</strong>
-                </div>
+                <form th:action="@{/undo}" method="post" class="undo-form" id="undoForm">
+                    <button class="secondary-button" id="undoButton" type="submit" th:disabled="${!canUndo}">Undo</button>
+                </form>
 
                 <div class="player-strip" id="cpuPlayers" th:classappend="${board.localTwoPlayers} ? ' hidden' : ''">
-                    <div class="player-card active-player">
+                    <h3>Players</h3>
+                    <div class="player-row active-player">
                         <span class="mini-disc"
                             th:classappend="${board.userColor == 1} ? ' black-disc' : ' white-disc'"></span>
-                        <div><small>You</small><strong id="userColorText"
-                                th:text="${board.userColorLabel}">Black</strong></div>
+                        <strong>You</strong>
+                        <span id="userColorText" th:text="${board.userColorLabel}">Black</span>
                     </div>
-                    <div class="player-card">
+                    <div class="player-row">
                         <span class="mini-disc"
                             th:classappend="${board.cpuColor == 1} ? ' black-disc' : ' white-disc'"></span>
-                        <div><small>CPU</small><strong id="cpuColorText" th:text="${board.cpuColorLabel}">White</strong>
-                        </div>
+                        <strong>CPU</strong>
+                        <span id="cpuColorText" th:text="${board.cpuColorLabel}">White</span>
                     </div>
                 </div>
 
                 <div class="player-strip" id="localPlayers" th:classappend="${board.localTwoPlayers} ? '' : ' hidden'">
-                    <div class="player-card active-player"><span class="mini-disc black-disc"></span>
-                        <div><small>Player</small><strong>Black</strong></div>
+                    <h3>Players</h3>
+                    <div class="player-row active-player"><span class="mini-disc black-disc"></span>
+                        <strong>Player 1</strong><span>Black</span>
                     </div>
-                    <div class="player-card"><span class="mini-disc white-disc"></span>
-                        <div><small>Player</small><strong>White</strong></div>
+                    <div class="player-row"><span class="mini-disc white-disc"></span>
+                        <strong>Player 2</strong><span>White</span>
                     </div>
                 </div>
 
-                <div class="winner-card" id="winnerCard" th:classappend="${board.gameOver} ? '' : ' hidden'">
-                    <span>RESULT</span>
-                    <strong id="winnerText" th:text="${board.winner}">黒の勝ち！</strong>
+                <div class="winner-card" id="winnerCard" th:classappend="${board.gameOver} ? '' : ' hidden'" aria-hidden="true">
+                    <span class="winner-label">RESULT</span>
+                    <strong class="winner-text" id="winnerText" th:text="${board.winner}">黒の勝ち！</strong>
                 </div>
             </aside>
 
-            <section class="board-card">
-                <div class="board-head">
-                    <div><span class="section-label">Board</span>
-                        <h2>8 × 8 Arena</h2>
+            <section class="play-area">
+                <div class="status-bar">
+                    <div class="status-stat black-status">
+                        <span>Black</span>
+                        <strong id="blackCount" th:text="${board.blackCount}">2</strong>
+                    </div>
+                    <span class="status-vs">VS</span>
+                    <div class="status-stat white-status">
+                        <span>White</span>
+                        <strong id="whiteCount" th:text="${board.whiteCount}">2</strong>
+                    </div>
+                    <div class="status-stat ai-status" th:classappend="${board.localTwoPlayers} ? ' hidden' : ''">
+                        <span>Evaluation</span>
+                        <strong id="cpuEvaluation" th:text="${board.cpuEvaluation}">0</strong>
+                    </div>
+                    <div class="status-stat ai-status" th:classappend="${board.localTwoPlayers} ? ' hidden' : ''">
+                        <span>Depth</span>
+                        <strong id="searchDepth" th:text="${board.searchDepth}">0</strong>
+                    </div>
+                    <div class="status-stat ai-status" th:classappend="${board.localTwoPlayers} ? ' hidden' : ''">
+                        <span>Time</span>
+                        <strong><span id="cpuThinkingTime"
+                                th:text="${#numbers.formatDecimal(board.cpuThinkingTimeMillis / 1000.0, 1, 2)}">0.00</span>s</strong>
                     </div>
                     <div class="turn-chip" id="turnChip" th:classappend="${board.gameOver} ? ' finished' : ''">
                         <span id="turnText"
@@ -124,61 +123,95 @@
                     </div>
                 </div>
 
-                <div class="board" aria-label="リバーシ盤面" id="board">
-                    <div th:each="r : ${#numbers.sequence(0,7)}" class="board-row">
-                        <form th:each="c : ${#numbers.sequence(0,7)}" th:action="@{/move}" method="post"
-                            class="cell-form move-form">
-                            <input type="hidden" name="row" th:value="${r}">
-                            <input type="hidden" name="col" th:value="${c}">
-                            <button type="submit" class="cell" th:data-row="${r}" th:data-col="${c}"
-                                th:disabled="${board.gameOver or (!board.localTwoPlayers and board.currentTurn != board.userColor)}"
-                                th:aria-label="|${r + 1}行 ${c + 1}列|" th:classappend="${board.cells[r][c] == 1 ? ' has-black' : (board.cells[r][c] == 2 ? ' has-white' : '')}
-                                              + (${legalMoves.contains(r + '-' + c)} ? ' legal' : '')
-                                              + (${showRecommendation and recommendedMove == r + '-' + c} ? ' recommended' : '')
-                                              + (${board.lastMoveRow == r and board.lastMoveCol == c} ? ' last' : '')">
-                                <span th:if="${board.cells[r][c] == 1}" class="disc disc-black"></span>
-                                <span th:if="${board.cells[r][c] == 2}" class="disc disc-white"></span>
-                                <span th:if="${board.cells[r][c] == 0 and legalMoves.contains(r + '-' + c)}"
-                                    class="hint"></span>
-                                <span th:if="${showRecommendation and recommendedMove == r + '-' + c}"
-                                    class="recommend-mark">★</span>
-                            </button>
-                        </form>
+                <div class="board-card">
+                    <div class="board" aria-label="リバーシ盤面" id="board">
+                        <div th:each="r : ${#numbers.sequence(0,7)}" class="board-row">
+                            <form th:each="c : ${#numbers.sequence(0,7)}" th:action="@{/move}" method="post"
+                                class="cell-form move-form">
+                                <input type="hidden" name="row" th:value="${r}">
+                                <input type="hidden" name="col" th:value="${c}">
+                                <button type="submit" class="cell" th:data-row="${r}" th:data-col="${c}"
+                                    th:disabled="${board.gameOver or (!board.localTwoPlayers and board.currentTurn != board.userColor)}"
+                                    th:aria-label="|${r + 1}行 ${c + 1}列|" th:classappend="${board.cells[r][c] == 1 ? ' has-black' : (board.cells[r][c] == 2 ? ' has-white' : '')}
+                                                  + (${legalMoves.contains(r + '-' + c)} ? ' legal' : '')
+                                                  + (${showRecommendation and recommendedMove == r + '-' + c} ? ' recommended' : '')
+                                                  + (${board.lastMoveRow == r and board.lastMoveCol == c} ? ' last' : '')">
+                                    <span th:if="${board.cells[r][c] == 1}" class="disc disc-black"></span>
+                                    <span th:if="${board.cells[r][c] == 2}" class="disc disc-white"></span>
+                                    <span th:if="${board.cells[r][c] == 0 and legalMoves.contains(r + '-' + c)}"
+                                        class="hint"></span>
+                                    <span th:if="${showRecommendation and recommendedMove == r + '-' + c}"
+                                        class="recommend-mark">★</span>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="message-panel">
+                    <p id="message" th:text="${board.message}">あなたの番です</p>
+                    <div class="recommend-box" id="recommendBox"
+                        th:classappend="${showRecommendation and recommendedMove != ''} ? '' : ' hidden'">
+                        <strong>おすすめ手は ★ のマスです。</strong>
+                    </div>
+                    <div class="thinking-box hidden" id="thinkingBox">
+                        <span class="thinking-spinner"></span>
+                        <strong>CPU thinking...</strong>
                     </div>
                 </div>
             </section>
 
             <aside class="side-card stats-card">
-                <div class="card-header"><span class="card-icon">📊</span>
-                    <div>
-                        <h2>Analytics</h2>
-                        <p>盤面と情報</p>
+                <div class="card-header">
+                    <h2>Analytics</h2>
+                </div>
+                <div class="tab-list" role="tablist" aria-label="Analytics tabs">
+                    <button class="tab-button active" type="button" data-tab="game" role="tab"
+                        aria-selected="true">Game</button>
+                    <button class="tab-button" type="button" data-tab="ai" role="tab" aria-selected="false">AI</button>
+                    <button class="tab-button" type="button" data-tab="history" role="tab"
+                        aria-selected="false">History</button>
+                </div>
+
+                <div class="tab-panel active" data-panel="game">
+                    <div class="metric-grid">
+                        <div class="metric"><span>現在の石数</span><strong id="discTotal"
+                                th:text="${board.blackCount + board.whiteCount}">4</strong></div>
+                        <div class="metric"><span>合法手数</span><strong id="legalMoveCount"
+                                th:text="${legalMoves.size()}">4</strong></div>
+                        <div class="metric metric-wide"><span>残りマス</span><strong id="emptyCount"
+                                th:text="${64 - board.blackCount - board.whiteCount}">60</strong></div>
                     </div>
                 </div>
-                <div class="score-meter">
-                    <div class="score-item dark"><span>Black</span><strong id="blackCount"
-                            th:text="${board.blackCount}">2</strong></div>
-                    <div class="score-vs">VS</div>
-                    <div class="score-item light"><span>White</span><strong id="whiteCount"
-                            th:text="${board.whiteCount}">2</strong></div>
-                </div>
-                <div class="metric-grid" id="cpuMetrics" th:classappend="${board.localTwoPlayers} ? ' hidden' : ''">
-                    <div class="metric"><span>CPU評価値</span><strong id="cpuEvaluation"
-                            th:text="${board.cpuEvaluation}">0</strong></div>
-                    <div class="metric"><span>探索深さ</span><strong id="searchDepth"
-                            th:text="${board.searchDepth}">0</strong></div>
-                    <div class="metric wide"><span>CPU思考時間</span><strong><span id="cpuThinkingTime"
-                                th:text="${#numbers.formatDecimal(board.cpuThinkingTimeMillis / 1000.0, 1, 2)}">0.00</span>s</strong>
+
+                <div class="tab-panel" data-panel="ai">
+                    <div class="metric-list">
+                        <div><span>Evaluation</span><strong id="aiEvaluationMirror"
+                                th:text="${board.cpuEvaluation}">0</strong></div>
+                        <div><span>Depth</span><strong id="aiDepthMirror" th:text="${board.searchDepth}">0</strong></div>
+                        <div><span>Search Time</span><strong><span id="aiTimeMirror"
+                                    th:text="${#numbers.formatDecimal(board.cpuThinkingTimeMillis / 1000.0, 1, 2)}">0.00</span>s</strong></div>
+                        <div><span>Visited Nodes</span><strong>--</strong></div>
+                        <div><span>Transposition Table</span><strong>Enabled</strong></div>
+                        <div><span>Move Ordering</span><strong>Enabled</strong></div>
                     </div>
                 </div>
+
+                <div class="tab-panel" data-panel="history">
+                    <ol class="history-list" id="historyList">
+                        <li th:if="${board.lastMoveRow >= 0 and board.lastMoveCol >= 0}"
+                            th:text="${'Last: ' + board.lastMoveRow + '-' + board.lastMoveCol}">
+                            Last: D3</li>
+                        <li th:if="${board.lastMoveRow < 0 or board.lastMoveCol < 0}">No moves yet</li>
+                    </ol>
+                </div>
+
                 <div class="legend">
                     <div id="recommendLegend"
                         th:classappend="${showRecommendation and !board.localTwoPlayers} ? '' : ' hidden'"><span
                             class="legend-dot recommend-dot"></span>おすすめ</div>
-                    <div><span class="legend-dot legal-dot"></span>置ける場所</div>
-                    <div><span class="legend-dot last-dot"></span>直前の手</div>
-                    <div><span class="legend-dot black-dot"></span>黒</div>
-                    <div><span class="legend-dot white-dot"></span>白</div>
+                    <div><span class="legend-dot legal-dot"></span>合法手</div>
+                    <div><span class="legend-dot last-dot"></span>前回の手</div>
                 </div>
             </aside>
         </section>
@@ -189,7 +222,11 @@
             const qs = (selector) => document.querySelector(selector);
             const qsa = (selector) => [...document.querySelectorAll(selector)];
             const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
-            const state = { busy: false, latestData: null };
+            const state = {
+                busy: false,
+                latestData: null,
+                canUndo: Boolean(qs("#undoButton") && !qs("#undoButton").disabled)
+            };
 
             qsa(".move-form").forEach((form) => {
                 form.addEventListener("submit", async (event) => {
@@ -218,6 +255,13 @@
                     if (state.busy) return;
                     const enabled = qs("#recommendToggle")?.classList.contains("on") ? "false" : "true";
                     await postAndRender("/api/recommendation", new URLSearchParams({ enabled }), false);
+                    return;
+                }
+
+                if (form.matches("#undoForm")) {
+                    event.preventDefault();
+                    if (state.busy || !state.canUndo) return;
+                    await postAndRender("/api/undo", new URLSearchParams(), true);
                 }
             });
 
@@ -274,6 +318,8 @@
 
             function setBusy(busy) {
                 state.busy = busy;
+                const undoButton = qs("#undoButton");
+                if (undoButton) undoButton.disabled = busy || !state.canUndo;
                 if (busy) {
                     qsa(".cell").forEach((cell) => cell.disabled = true);
                     return;
@@ -291,6 +337,7 @@
                 const showRecommendation = Boolean(data.showRecommendation);
                 const localTwoPlayers = Boolean(data.localTwoPlayers);
                 const recommendationActive = showRecommendation && Boolean(data.recommendationVisible) && !data.cpuPending && !data.gameOver && !localTwoPlayers;
+                state.canUndo = Boolean(data.canUndo);
 
                 qs("#message").textContent = data.message || "";
                 qs("#blackCount").textContent = data.blackCount;
@@ -298,6 +345,15 @@
                 qs("#cpuEvaluation").textContent = data.cpuEvaluation;
                 qs("#searchDepth").textContent = data.searchDepth;
                 qs("#cpuThinkingTime").textContent = (Number(data.cpuThinkingTimeMillis || 0) / 1000).toFixed(2);
+                qs("#discTotal").textContent = Number(data.blackCount || 0) + Number(data.whiteCount || 0);
+                qs("#legalMoveCount").textContent = legalMoves.size;
+                qs("#emptyCount").textContent = Math.max(0, 64 - Number(data.blackCount || 0) - Number(data.whiteCount || 0));
+                qs("#aiEvaluationMirror").textContent = data.cpuEvaluation;
+                qs("#aiDepthMirror").textContent = data.searchDepth;
+                qs("#aiTimeMirror").textContent = (Number(data.cpuThinkingTimeMillis || 0) / 1000).toFixed(2);
+                const undoButton = qs("#undoButton");
+                if (undoButton) undoButton.disabled = state.busy || !state.canUndo;
+                updateHistory(data);
                 if (qs("#userColorText")) qs("#userColorText").textContent = data.userColorLabel || "";
                 if (qs("#cpuColorText")) qs("#cpuColorText").textContent = data.cpuColorLabel || "";
 
@@ -312,7 +368,7 @@
                 qs("#recommendLegend")?.classList.toggle("hidden", !(showRecommendation && !localTwoPlayers));
                 qs("#cpuPlayers")?.classList.toggle("hidden", localTwoPlayers);
                 qs("#localPlayers")?.classList.toggle("hidden", !localTwoPlayers);
-                qs("#cpuMetrics")?.classList.toggle("hidden", localTwoPlayers);
+                qsa(".ai-status").forEach((item) => item.classList.toggle("hidden", localTwoPlayers));
                 qs("#recommendForm")?.classList.toggle("hidden", localTwoPlayers);
                 qs(".difficulty-form")?.classList.toggle("hidden", localTwoPlayers);
 
@@ -356,6 +412,32 @@
                 if (recommended) html += '<span class="recommend-mark">★</span>';
                 return html;
             }
+
+            function updateHistory(data) {
+                const list = qs("#historyList");
+                if (!list) return;
+                const row = Number(data.lastMoveRow);
+                const col = Number(data.lastMoveCol);
+                if (row < 0 || col < 0) {
+                    list.innerHTML = "<li>No moves yet</li>";
+                    return;
+                }
+                list.innerHTML = `<li>Last: ${String.fromCharCode(65 + col)}${row + 1}</li>`;
+            }
+
+            qsa(".tab-button").forEach((button) => {
+                button.addEventListener("click", () => {
+                    const tab = button.dataset.tab;
+                    qsa(".tab-button").forEach((item) => {
+                        const active = item === button;
+                        item.classList.toggle("active", active);
+                        item.setAttribute("aria-selected", String(active));
+                    });
+                    qsa(".tab-panel").forEach((panel) => {
+                        panel.classList.toggle("active", panel.dataset.panel === tab);
+                    });
+                });
+            });
         })();
     </script>
 </body>

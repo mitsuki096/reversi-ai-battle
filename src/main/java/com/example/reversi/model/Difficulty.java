@@ -1,10 +1,10 @@
 package com.example.reversi.model;
 
 public enum Difficulty {
-    EASY(2, "Easy"),
-    NORMAL(4, "Normal"),
-    HARD(6, "Hard"),
-    ULTIMATE(10, "Ultimate");
+    EASY(1, "Easy"),
+    NORMAL(2, "Normal"),
+    HARD(4, "Hard"),
+    ULTIMATE(6, "Ultimate");
 
     private final int depth;
     private final String label;
